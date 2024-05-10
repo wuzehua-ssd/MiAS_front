@@ -1,0 +1,20 @@
+.title {
+    text-align: center;
+    margin-bottom: 24px;
+}
+  
+.loginContainer {
+    width: 360px;
+    height: 360px;
+    position: absolute;
+    top: 20%;
+    left: 10%;
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+}
+  
+.loginBtn {
+    width: 32%;
+    background-color: rgb(24, 215, 24);
+}

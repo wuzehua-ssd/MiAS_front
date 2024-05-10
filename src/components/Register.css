@@ -1,0 +1,19 @@
+.title {
+    text-align: center;
+    margin-bottom: 24px;
+}
+  
+.container {
+    width: 360px;
+    height: 480px;
+    position: absolute;
+    top: 15%;
+    left: 10%;
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+}
+  
+.btn {
+    width: 32%;
+}
