@@ -2,6 +2,15 @@ import { Breadcrumb, theme, Layout } from "antd";
 
 const { Content } = Layout;
 
+const breadItem = [
+    {
+        title: '服务进度',
+    },
+    {
+        title: '工单创建',
+    },
+];
+
 function UserOrderCreate() {
     const {
         token: { colorBgContainer, borderRadiusLG },
@@ -9,9 +18,7 @@ function UserOrderCreate() {
 
     return (
         <>
-            <Breadcrumb style={{ margin: '16px 0' }}>
-                <Breadcrumb.Item>服务进度</Breadcrumb.Item>
-                <Breadcrumb.Item>工单创建</Breadcrumb.Item>
+            <Breadcrumb style={{ margin: '16px 0' }} items={breadItem}>
             </Breadcrumb>
             <Content style={{ 
                 padding: 24, 
