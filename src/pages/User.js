@@ -1,8 +1,8 @@
-import { Dropdown, Layout, Menu } from "antd";
+import { Dropdown, Layout, Menu, message } from "antd";
 import './User.css';
 import UserOrderList from "../components/user/UserOrderList";
 import UserOrderCreate from "../components/user/UserOrderCreate";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ const ITEMS = [
         key: "serviceProgress",
         children: [
             { label: "工单列表", key: "/userOrderList"},
-            { label: "工单提交", key: "/orderCreate"},
+            { label: "工单创建", key: "/orderCreate"},
         ],
     }
 ]
@@ -24,7 +24,17 @@ function UserHome() {
 
     const navigate = useNavigate();
 
+    useEffect(() => {
+        if (!localStorage.getItem("user")) {
+            // console.log(userData);
+            message.error("请先登录！");
+            navigate('/');
+        }
+    }, [])
+    
+
     const handleLoginout = () => {
+        localStorage.removeItem("user");
         navigate('/');
     }
 
@@ -48,12 +58,16 @@ function UserHome() {
         setSelectedMenuItem("/orderCreate");
     }
 
+    const switchList = () => {
+        setSelectedMenuItem("/userOrderList");
+    }
+
     const renderContent = () => {
         switch (selectedMenuItem) {
             case "/userOrderList":
               return <UserOrderList sonSwitch={switchCreate} />;
             case "/orderCreate":
-              return <UserOrderCreate />;
+              return <UserOrderCreate sonSwitch={switchList}/>;
             default:
               return null;
         }

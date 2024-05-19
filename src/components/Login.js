@@ -23,7 +23,7 @@ function Login(props) {
       .then(response => {
         if (response.code === '200') {
           message.success('登录成功！')
-          // console.log(response)
+          localStorage.setItem("user", JSON.stringify(response.data));
           if (response.data.identity === 0) {
             navigate('/user');
           } else if (response.data.identity === 1) {

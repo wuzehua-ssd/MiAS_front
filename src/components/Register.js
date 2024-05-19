@@ -27,6 +27,7 @@ function Register(props) {
         .then(response => {
           if (response.code === '200') {
             message.success('注册成功！')
+            localStorage.setItem("user", JSON.stringify(response.data));
             navigate('/user');
           } else {
             message.error(response.msg);
