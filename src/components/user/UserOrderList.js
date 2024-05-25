@@ -79,6 +79,8 @@ function UserOrderList(props) {
     const [previewImage, setPreviewImage] = useState('');
     // 保存后端返回的文件列表
     const [imageFileList, setImageFileList] = useState([]);
+    const [engineerName, setEngineerName] = useState(null);
+    const [engineerDesc, setEngineerDesc] = useState(null);
 
     const [shouldCallShowProcessDetails, setShouldCallShowProcessDetails] = useState(false);
 
@@ -148,7 +150,7 @@ function UserOrderList(props) {
                 const handleShowProgress = () => {
                     setSelectedOrder(record);
                     setShouldCallShowProcessDetails(true);
-                    setIsDetailModalVisible(true);  
+                    // setIsDetailModalVisible(true);  
                 };
                 const handleShowConfirm = () => {
                     setSelectedOrder(record);
@@ -177,6 +179,13 @@ function UserOrderList(props) {
                         <Space>
                             <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
                             <a onClick={(e) => {e.stopPropagation(); handleShowCancel()}}>取消工单</a>
+                        </Space>
+                    );
+                }
+                if (record.status === 3 || record.status === 4) {
+                    return (
+                        <Space>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
                         </Space>
                     );
                 }
@@ -268,6 +277,9 @@ function UserOrderList(props) {
         orderDetails(queryData)
         .then(response => {
             setImageFileList(response.data.imageFileList);
+            setEngineerName(response.data.engineerName);
+            setEngineerDesc(response.data.engineerDesc);
+            setIsDetailModalVisible(true);
         })
         .catch(error => {
             console.log(error);
@@ -275,10 +287,13 @@ function UserOrderList(props) {
     }
 
     useEffect(() => {
-        if (selectedOrder && shouldCallShowProcessDetails) {
-            showProcessDetails();
-            setShouldCallShowProcessDetails(false);
-          }
+        const runShowProcessDetails = async () => {
+            if (selectedOrder && shouldCallShowProcessDetails) {
+                await showProcessDetails();
+                setShouldCallShowProcessDetails(false);
+            }
+        };
+        runShowProcessDetails();
     }, [selectedOrder, shouldCallShowProcessDetails])
 
     const uploadButton = (
@@ -422,7 +437,7 @@ function UserOrderList(props) {
                         </div>
                     </div>
                 )}
-                { (selectedOrder === null ? 0 : selectedOrder.status) >= 1 && (
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 2 && (
                     <div>
                         <h4>2、用户工单确认：已完成！</h4>
                         <div className="user-pics">
@@ -441,6 +456,18 @@ function UserOrderList(props) {
                                 )}
                             </div>
                         </div>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 3 && (
+                    <div>
+                        <h4>3、工程师认领工单：已完成！</h4>
+                        <p>该工单已分配给工程师：{engineerName}。</p>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 4 && (
+                    <div>
+                        <h4>4、工程师人工检测：已完成！</h4>
+                        <p>故障检测结果：{engineerDesc}。</p>
                     </div>
                 )}
             </Modal>

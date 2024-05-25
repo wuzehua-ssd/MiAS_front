@@ -99,3 +99,47 @@ export async function orderDetails(queryData) {
         throw error;
     }
 }
+
+export async function orderAccept(queryData) {
+    const user = JSON.parse(localStorage.getItem("user") || '{}');
+    const token = user.token;
+    try {
+        const res = await axios.put(
+            "http://localhost:8080/order/accept",
+            null,
+            {
+                headers: {
+                    token: token, // 添加用户token
+                    "Content-Type": "application/json" // 设置请求头的Content-Type
+                },
+                params: queryData
+            }
+        );
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export async function orderMaintenance(queryData) {
+    const user = JSON.parse(localStorage.getItem("user") || '{}');
+    const token = user.token;
+    try {
+        const res = await axios.put(
+            "http://localhost:8080/order/maintenance",
+            null,
+            {
+                headers: {
+                    token: token, // 添加用户token
+                    "Content-Type": "application/json" // 设置请求头的Content-Type
+                },
+                params: queryData
+            }
+        );
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
