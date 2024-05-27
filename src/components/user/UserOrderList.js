@@ -81,6 +81,9 @@ function UserOrderList(props) {
     const [imageFileList, setImageFileList] = useState([]);
     const [engineerName, setEngineerName] = useState(null);
     const [engineerDesc, setEngineerDesc] = useState(null);
+    const [predCost, setPredCost] = useState(null);
+    const [videoFile, setVideoFile] = useState(null);
+    const [realCost, setRealCost] = useState(null);
 
     const [shouldCallShowProcessDetails, setShouldCallShowProcessDetails] = useState(false);
 
@@ -89,36 +92,43 @@ function UserOrderList(props) {
             title: "工单号",
             dataIndex: "id",
             key: "id",
+            width: 80,
         },
         {
             title: "姓名",
             dataIndex: "userName",
             key: "userName",
+            width: 80,
         },
         {
             title: "电话",
             dataIndex: "userPhone",
             key: "userPhone",
+            width: 100,
         },
         {
             title: "地址",
             dataIndex: "userAddress",
             key: "userAddress",
+            width: 80,
         },
         {
             title: "商品信息",
             dataIndex: "productInfo",
             key: "productInfo",
+            width: 250,
         },
         {
             title: "SN信息",
             dataIndex: "snInfo",
             key: "snInfo",
+            width: 100,
         },
         {
             title: "工单状态",
             dataIndex: "status",
             key: "status",
+            width: 100,
             render: (status) => {
                 const state = orderStateList.find(item => item.value === status);
                 if (state) {
@@ -137,15 +147,19 @@ function UserOrderList(props) {
             title: "用户故障描述",
             dataIndex: "userDesc",
             key: "userDesc",
+            width: 200,
         },
         {
             title: "发票号",
             dataIndex: "invoiceInfo",
             key: "invoiceInfo",
+            width: 100,
         },
         {
             title: "操作",
             key: "action",
+            fixed: "right",
+            width: 240,
             render: (_, record) => {
                 const handleShowProgress = () => {
                     setSelectedOrder(record);
@@ -182,10 +196,34 @@ function UserOrderList(props) {
                         </Space>
                     );
                 }
-                if (record.status === 3 || record.status === 4) {
+                if (record.status === 3 || record.status === 4 || record.status === 5) {
                     return (
                         <Space>
                             <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                        </Space>
+                    );
+                }
+                if (record.status === 6) {
+                    return (
+                        <Space>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                            <a onClick={(e) => {e.stopPropagation();}}>费用支付</a>
+                        </Space>
+                    );
+                }
+                if (record.status === 7) {
+                    return (
+                        <Space>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                            <a onClick={(e) => {e.stopPropagation();}}>确认收货</a>
+                        </Space>
+                    );
+                }
+                if (record.status === 8) {
+                    return (
+                        <Space>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                            <text style={{color:"green"}}>业务已完成！</text>
                         </Space>
                     );
                 }
@@ -226,7 +264,7 @@ function UserOrderList(props) {
                 // 从响应中提取数据并更新 dataSource
                 const data = response.data; // 假设响应中的数据为 data 字段
                 setDataSource(data);
-                const total = data === null ? 0 : data[0].totalNum;
+                const total = data.length === 0 ? 0 : data[0].totalNum;
                 // console.log(total);
                 setPagination(prevPagination => ({
                     ...prevPagination,
@@ -255,7 +293,7 @@ function UserOrderList(props) {
         .then(response => {
             const data = response.data;
             setDataSource(data);
-            const total = data === null ? 0 : data[0].totalNum;
+            const total = data.length === 0 ? 0 : data[0].totalNum;
             setPagination(prevPagination => ({
                 ...prevPagination,
                 total,
@@ -276,10 +314,17 @@ function UserOrderList(props) {
         }
         orderDetails(queryData)
         .then(response => {
-            setImageFileList(response.data.imageFileList);
-            setEngineerName(response.data.engineerName);
-            setEngineerDesc(response.data.engineerDesc);
-            setIsDetailModalVisible(true);
+            if (response.code === '200') {
+                setImageFileList(response.data.imageFileList);
+                setEngineerName(response.data.engineerName);
+                setEngineerDesc(response.data.engineerDesc);
+                setPredCost(response.data.predCost);
+                setVideoFile(response.data.videoFile);
+                setRealCost(response.data.realCost);
+                setIsDetailModalVisible(true);
+            } else {
+                message.error(response.msg);
+            } 
         })
         .catch(error => {
             console.log(error);
@@ -334,25 +379,25 @@ function UserOrderList(props) {
         if (!isFileSizeValid) {
             return;
         }
+        const formData = new FormData();
         fileList.forEach(file => {
-           const formData = new FormData();
            // console.log(file);
-           formData.append("file", file.originFileObj);
-           formData.append("orderId", selectedOrder.id);
-           // console.log(formData.get('file'));
-           // 调用后端文件上传接口
-           orderConfirm(formData)
-           .then(response => {
-                message.success(response.msg);
-                setIsConfirmModalVisible(false);
-                const values = {
-                    orderState: null,
-                };
-                handleSearchFish(values);
-           })
-           .catch(error => {
-                console.log(error);
-            });
+           formData.append("files", file.originFileObj);
+        });
+        formData.append("orderId", selectedOrder.id);
+        // console.log(formData.get('file'));
+        // 调用后端文件上传接口
+        orderConfirm(formData)
+        .then(response => {
+            message.success(response.msg);
+            setIsConfirmModalVisible(false);
+            const values = {
+                orderState: null,
+            };
+            handleSearchFish(values);
+        })
+        .catch(error => {
+            console.log(error);
         });
     }
 
@@ -412,7 +457,7 @@ function UserOrderList(props) {
                     </Form.Item>
                 </Form>
                 <br></br>
-                <Table dataSource={dataSource} columns={columns} pagination={pagination} onChange={handleTableChange}></Table>
+                <Table dataSource={dataSource} columns={columns} pagination={pagination} onChange={handleTableChange} scroll={{x: 'max-content', y: '50vh'}}></Table>
             </Content>
             <Modal
                 title="工单进度查询"
@@ -468,6 +513,36 @@ function UserOrderList(props) {
                     <div>
                         <h4>4、工程师人工检测：已完成！</h4>
                         <p>故障检测结果：{engineerDesc}。</p>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 5 && (
+                    <div>
+                        <h4>5、工程师设备维修：已完成！</h4>
+                        <p>预估维修费用：{predCost}元RMB。</p>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 6 && (
+                    <div>
+                        <h4>6、工程师人工自检：已完成！</h4>
+                        <p>自检视频：</p>
+                        <div className="video-container">
+                            {videoFile && (
+                                <video controls className="video-player">
+                                <source src={`data:video/mp4;base64,${videoFile}`} type="video/mp4" />
+                                </video>
+                            )}
+                        </div>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 7 && (
+                    <div>
+                        <h4>7、用户支付：已完成！</h4>
+                        <p>实际支付费用：{realCost}元RMB。</p>
+                    </div>
+                )}
+                { (selectedOrder === null ? 0 : selectedOrder.status) >= 8 && (
+                    <div>
+                        <h4>8、工单已完成！</h4>
                     </div>
                 )}
             </Modal>

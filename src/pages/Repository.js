@@ -98,7 +98,7 @@ function RepositoryHome() {
                         selectedKeys={[selectedMenuItem]}
                         defaultSelectedKeys={["/inventoryList"]} 
                         defaultOpenKeys={["repositoryManage"]} 
-                        style={{height: "92vh", borderRight: 0}}
+                        style={{height: "108vh", borderRight: 0}}
                         items={ITEMS}
                         onSelect={handleMenuSelect}
                     />

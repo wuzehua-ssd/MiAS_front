@@ -127,7 +127,7 @@ function InventoryList() {
                 // 从响应中提取数据并更新 dataSource
                 const data = response.data; // 假设响应中的数据为 data 字段
                 setDataSource(data);
-                const total = data === null ? 0 : data[0].totalNum;
+                const total = data.length === 0 ? 0 : data[0].totalNum;
                 // console.log(total);
                 setPagination(prevPagination => ({
                     ...prevPagination,
@@ -155,7 +155,7 @@ function InventoryList() {
         .then(response => {
             const data = response.data;
             setDataSource(data);
-            const total = data === null ? 0 : data[0].totalNum;
+            const total = data.length === 0 ? 0 : data[0].totalNum;
             setPagination(prevPagination => ({
                 ...prevPagination,
                 total,

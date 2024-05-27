@@ -76,7 +76,7 @@ function EngineerHome() {
                         selectedKeys={[selectedMenuItem]}
                         defaultSelectedKeys={["/engineerOrderList"]} 
                         defaultOpenKeys={["orderProcess"]} 
-                        style={{height: "92vh", borderRight: 0}}
+                        style={{height: "93vh", borderRight: 0}}
                         items={ITEMS}
                         onSelect={handleMenuSelect}
                     />
