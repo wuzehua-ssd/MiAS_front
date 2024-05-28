@@ -1,7 +1,7 @@
 import { Breadcrumb, Form, Layout, theme, Select, Button, Tag, Space, Table, Modal, message, Input, Upload } from "antd";
 import { useState, useEffect } from "react";
 import { UploadOutlined } from '@ant-design/icons';
-import { orderAccept, orderList, orderMaintenance, orderRecheck, orderToRecheck } from "../../api/Order";
+import { orderAccept, orderList, orderMaintenance, orderRecheck, orderToRecheck, orderReturn } from "../../api/Order";
 import './EngineerOrderList.css';
 import { inventoryList } from "../../api/Inventory";
 
@@ -34,7 +34,7 @@ const orderStateList = [
     },
     {
         value: 6,
-        label: '费用待支付',
+        label: '费用支付中',
     },
     {
         value: 7,
@@ -112,6 +112,7 @@ function EngineerOrderList() {
     const [videoUrl, setVideoUrl] = useState(null);
     const [fileList, setFileList] = useState([]);
     const [fileSelected, setFileSelected] = useState(false);
+    const [isReturnModalVisible, setIsReturnModalVisible] = useState(false);
 
     const columns = [
         {
@@ -251,11 +252,19 @@ function EngineerOrderList() {
                         </Space>
                     );
                 }
-                if (record.status === 6) {
+                if (record.status === 6 && record.payStatus <= 2) {
+                    return (
+                        <text style={{color:"red"}}>待用户支付费用！</text>
+                    );
+                }
+                if (record.status === 6 && record.payStatus === 3) {
+                    const handleShowReturn = () => {
+                        setSelectedOrder(record);
+                        setIsReturnModalVisible(true);
+                    };
                     return (
                         <Space>
-                            <a onClick={(e) => {e.stopPropagation();}}>查看支付情况</a>
-                            <a onClick={(e) => {e.stopPropagation();}}>返还设备</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowReturn()}}>返还设备</a>
                         </Space>
                     );
                 }
@@ -596,6 +605,32 @@ function EngineerOrderList() {
         runOrderToCheck();
     }, [selectedInventory, isInventory])
 
+    const handleOrderReturn = () => {
+        const user = JSON.parse(localStorage.getItem("user") || '{}');
+        const engineerId = user.id;
+        const queryData = {
+            orderId: selectedOrder.id,
+            engineerId
+        }
+        orderReturn(queryData)
+        .then(response => {
+            if (response.code === '200') {
+                message.success("设备返还成功！");
+                setIsReturnModalVisible(false);
+                const values = {
+                    orderState: null,
+                };
+                handleSearchFish(values);
+                setSelectedOrder(null);
+            } else {
+                message.error(response.msg);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    }
+
     return (
         <>
             <Breadcrumb style={{ margin: '16px 0' }} items={breadItem}>
@@ -718,6 +753,20 @@ function EngineerOrderList() {
                 </Button>
                 <Button type="primary" className="btn-spacing" onClick={() => {setIsRecheckModalVisible(false);setSelectedOrder(null);setVideoUrl(null);setFileList([])}}>
                     取消上传
+                </Button>
+            </Modal>
+            <Modal
+                title="返还设备"
+                open={isReturnModalVisible}
+                onCancel={() => {setIsReturnModalVisible(false); setSelectedOrder(null)}}
+                footer={null}
+            >
+                <p>是否确定返还工单号为: {selectedOrder===null ? -1 : selectedOrder.id} 的工单？</p>
+                <Button type="primary" style={{ backgroundColor: 'green' }} className="btn-spacing" onClick={handleOrderReturn}>
+                    是
+                </Button>
+                <Button type="primary" className="btn-spacing" onClick={() => {setIsAcceptModalVisible(false); setSelectedOrder(null)}}>
+                    否
                 </Button>
             </Modal>
         </>

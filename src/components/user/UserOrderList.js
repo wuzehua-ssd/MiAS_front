@@ -1,8 +1,9 @@
-import { Breadcrumb, theme, Layout, Form, Select, Button, Table, Space, Modal, Tag, message, Upload, Image } from "antd";
+import { Breadcrumb, theme, Layout, Form, Select, Button, Table, Space, Modal, Tag, message, Upload, Image, QRCode } from "antd";
 import { useState, useEffect } from "react";
-import { orderCancel, orderList, orderConfirm, orderDetails } from "../../api/Order";
+import { orderCancel, orderList, orderConfirm, orderDetails, orderConfirmReceipt } from "../../api/Order";
 import './UserOrderList.css'
 import { PlusOutlined } from '@ant-design/icons';
+import { payCreate, paySearch } from "../../api/pay";
 
 const { Content } = Layout;
 
@@ -41,7 +42,7 @@ const orderStateList = [
     },
     {
         value: 6,
-        label: '费用待支付',
+        label: '费用支付中',
     },
     {
         value: 7,
@@ -84,8 +85,15 @@ function UserOrderList(props) {
     const [predCost, setPredCost] = useState(null);
     const [videoFile, setVideoFile] = useState(null);
     const [realCost, setRealCost] = useState(null);
+    const [isWXPayModalVisible, setIsWXPayModalVisible] = useState(false);
+    const [isALiPayModalVisible, setIsALiPayModalVisible] = useState(false);
+    const [isPayRecordModalVisible, setIsPayRecordModalVisible] = useState(false);
+    const [isConfirmReceiptModalVisible, setIsConfirmReceiptModalVisible] = useState(false);
 
     const [shouldCallShowProcessDetails, setShouldCallShowProcessDetails] = useState(false);
+    const [shouldCallWXPay, setShouldCallWXPay] = useState(false);
+    const [shouldCallALiPay, setShouldCallALiPay] = useState(false);
+    const [codeUrl, setCodeUrl] = useState(null);
 
     const columns = [
         {
@@ -174,6 +182,18 @@ function UserOrderList(props) {
                     setSelectedOrder(record);
                     setIsCancelModalVisible(true);
                 };
+                const handleShowWXPay = async () => {
+                    setSelectedOrder(record);
+                    setShouldCallWXPay(true);
+                }
+                const handleShowALiPay = () => {
+                    setSelectedOrder(record);
+                    setShouldCallALiPay(true);
+                }
+                const handleShowPayRecord = () => {
+                    setSelectedOrder(record);
+                    setIsPayRecordModalVisible(true);
+                }
                 if (record.status === 0) {
                     return (
                         <text style={{color:"red"}}>该工单已被用户取消！</text>
@@ -203,19 +223,33 @@ function UserOrderList(props) {
                         </Space>
                     );
                 }
-                if (record.status === 6) {
+                if (record.status === 6 && record.payStatus <= 2) {
                     return (
                         <Space>
                             <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
-                            <a onClick={(e) => {e.stopPropagation();}}>费用支付</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowWXPay()}}>微信支付</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowALiPay()}}>支付宝支付</a>
+                        </Space>
+                    );
+                }
+                if (record.status === 6 && record.payStatus === 3) {
+                    return (
+                        <Space>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowPayRecord()}}>流水查询</a>
                         </Space>
                     );
                 }
                 if (record.status === 7) {
+                    const handleShowConfirmReceipt = () => {
+                        setSelectedOrder(record);
+                        setIsConfirmReceiptModalVisible(true);
+                    };
                     return (
                         <Space>
                             <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
-                            <a onClick={(e) => {e.stopPropagation();}}>确认收货</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowPayRecord()}}>流水查询</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowConfirmReceipt()}}>确认设备返还</a>
                         </Space>
                     );
                 }
@@ -223,6 +257,7 @@ function UserOrderList(props) {
                     return (
                         <Space>
                             <a onClick={(e) => {e.stopPropagation(); handleShowProgress()}}>进度查询</a>
+                            <a onClick={(e) => {e.stopPropagation(); handleShowPayRecord()}}>流水查询</a>
                             <text style={{color:"green"}}>业务已完成！</text>
                         </Space>
                     );
@@ -424,6 +459,107 @@ function UserOrderList(props) {
         });
     }
 
+    const WXPay = () => {
+        let intervalId = null;
+        const maxTries = 20;
+        let tries = 0;
+
+        const queryData = {
+            orderId: selectedOrder ? selectedOrder.id : 0,
+            payType: "NATIVE"
+        };
+        payCreate(queryData)
+        .then(response => {
+            if (response.code === '200') {
+                message.success("支付单创建成功！");
+                setCodeUrl(response.data.codeUrl);
+                setIsWXPayModalVisible(true);
+                const paySearchData = {
+                    orderId: selectedOrder ? selectedOrder.id : 0,
+                }
+                // 开始查询支付状态
+                intervalId = setInterval(() => {
+                    paySearch(paySearchData)
+                    .then(statusResponse => {
+                        if (statusResponse.payStatus == 3) {
+                            clearInterval(intervalId);
+                            message.success("支付成功！");
+                            setIsWXPayModalVisible(false);
+                            const values = {
+                                orderState: null,
+                            };
+                            handleSearchFish(values);
+                            setSelectedOrder(null);
+
+                        } else if (tries >= maxTries) {
+                            clearInterval(intervalId);
+                            message.error("支付失败或超时！");
+                            setIsWXPayModalVisible(false);
+                        } else {
+                            tries++;
+                        }
+                    })
+                    .catch(error => {
+                        message.error("查询支付状态出错！");
+                        clearInterval(intervalId);
+                    });
+                }, 3000);
+            } else {
+                message.error(response.msg);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    }
+
+    useEffect(() => {
+        const runWXPay = async () => {
+            if (selectedOrder && shouldCallWXPay) {
+                WXPay();
+                setShouldCallWXPay(false);
+            }
+        };
+        runWXPay();
+    }, [selectedOrder, shouldCallWXPay])
+
+    const ALiPay = () => {
+        setIsALiPayModalVisible(true);
+    }
+
+    useEffect(() => {
+        const runALiPay = async () => {
+            if (selectedOrder && shouldCallALiPay) {
+                await ALiPay();
+                setShouldCallALiPay(false);
+            }
+        };
+        runALiPay();
+    }, [selectedOrder, shouldCallALiPay])
+
+    const handleConfirmReceipt = () => {
+        const queryData = {
+            id: selectedOrder.id
+        }
+        orderConfirmReceipt(queryData)
+        .then(response => {
+            if (response.code === '200') {
+                message.success("确认设备返还成功！");
+                setIsConfirmReceiptModalVisible(false);
+                const values = {
+                    orderState: null,
+                };
+                handleSearchFish(values);
+                setSelectedOrder(null);
+            } else {
+                message.error(response.msg);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    }
+
     return (
         <>
             <Breadcrumb style={{ margin: '16px 0' }} items={breadItem}>
@@ -588,6 +724,60 @@ function UserOrderList(props) {
                     是
                 </Button>
                 <Button type="primary" className="btn-spacing" onClick={() => {setIsCancelModalVisible(false); setSelectedOrder(null)}}>
+                    否
+                </Button>
+            </Modal>
+            <Modal
+                title="微信支付"
+                open={isWXPayModalVisible}
+                onCancel={() => {setIsWXPayModalVisible(false); setSelectedOrder(null)}}
+                footer={null}
+            >
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <QRCode value={codeUrl || '-'} />
+                </div>
+            </Modal>
+            <Modal
+                title="支付宝支付"
+                open={isALiPayModalVisible}
+                onCancel={() => {setIsALiPayModalVisible(false); setSelectedOrder(null)}}
+                footer={null}
+            >
+            </Modal>
+            <Modal
+                title="支付流水记录"
+                open={isPayRecordModalVisible}
+                onCancel={() => {setIsPayRecordModalVisible(false); setSelectedOrder(null)}}
+                footer={null}
+            >
+                { selectedOrder != null && (
+                    <div>
+                        <div className="user-details">
+                            <h5>用户信息：</h5>
+                            <p>姓名：{selectedOrder.userName}，电话：{selectedOrder.userPhone}，地址：{selectedOrder.userAddress}</p>
+                        </div>
+                        <div className="order-details">
+                            <h5>订单信息：</h5>
+                            <p>商品信息：{selectedOrder.productInfo}，SN信息：{selectedOrder.snInfo}，发票信息：{selectedOrder.invoiceInfo}</p>
+                        </div>
+                        <div className="user-descs">
+                            <h5>支付流水：</h5>
+                            <p>用户实际支付费用为：{selectedOrder.realCost}元人民币。</p>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+            <Modal
+                title="确认设备返还"
+                open={isConfirmReceiptModalVisible}
+                onCancel={() => {setIsConfirmReceiptModalVisible(false); setSelectedOrder(null)}}
+                footer={null}
+            >
+                <p>是否确定取消工单号为: {selectedOrder===null ? -1 : selectedOrder.id} 的工单中的设备：{selectedOrder===null ? "" : selectedOrder.productInfo},您已经收到！</p>
+                <Button type="primary" style={{ backgroundColor: 'red' }} className="btn-spacing" onClick={handleConfirmReceipt}>
+                    是
+                </Button>
+                <Button type="primary" className="btn-spacing" onClick={() => {setIsConfirmReceiptModalVisible(false); setSelectedOrder(null)}}>
                     否
                 </Button>
             </Modal>

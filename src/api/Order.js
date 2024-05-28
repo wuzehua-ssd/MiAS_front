@@ -185,3 +185,45 @@ export async function orderRecheck(formData) {
         throw error;
     }
 }
+
+export async function orderReturn(queryData) {
+    const user = JSON.parse(localStorage.getItem("user") || '{}');
+    const token = user.token;
+    try {
+        const res = await axios.put(
+            "http://localhost:8080/order/return",
+            null,
+            {
+                headers: {
+                    token: token, // 添加用户token
+                    "Content-Type": "application/json" // 设置请求头的Content-Type
+                },
+                params: queryData
+            }
+        );
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+export async function orderConfirmReceipt(queryData) {
+    const user = JSON.parse(localStorage.getItem("user") || '{}');
+    const token = user.token;
+    try {
+        const res = await axios.post(
+            "http://localhost:8080/order/confirmReceipt",
+            queryData,
+            {
+                headers: {
+                    token: token // 添加用户token
+                }
+            }
+        );
+        return res.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
