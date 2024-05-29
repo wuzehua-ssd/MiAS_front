@@ -94,6 +94,7 @@ function UserOrderList(props) {
     const [shouldCallWXPay, setShouldCallWXPay] = useState(false);
     const [shouldCallALiPay, setShouldCallALiPay] = useState(false);
     const [codeUrl, setCodeUrl] = useState(null);
+    const [aLiPayBody, setALiPayBody] = useState('');
 
     const columns = [
         {
@@ -524,13 +525,63 @@ function UserOrderList(props) {
     }, [selectedOrder, shouldCallWXPay])
 
     const ALiPay = () => {
-        setIsALiPayModalVisible(true);
+        let intervalId = null;
+        const maxTries = 20;
+        let tries = 0;
+
+        const queryData = {
+            orderId: selectedOrder ? selectedOrder.id : 0,
+            payType: "alipay_pc"
+        };
+        payCreate(queryData)
+        .then(response => {
+            if (response.code === '200') {
+                message.success("支付单创建成功！");
+                setALiPayBody(response.data.body);
+                setIsALiPayModalVisible(true);
+                const paySearchData = {
+                    orderId: selectedOrder ? selectedOrder.id : 0,
+                }
+                // 开始查询支付状态
+                intervalId = setInterval(() => {
+                    paySearch(paySearchData)
+                    .then(statusResponse => {
+                        if (statusResponse.payStatus == 3) {
+                            clearInterval(intervalId);
+                            message.success("支付成功！");
+                            setIsALiPayModalVisible(false);
+                            const values = {
+                                orderState: null,
+                            };
+                            handleSearchFish(values);
+                            setSelectedOrder(null);
+
+                        } else if (tries >= maxTries) {
+                            clearInterval(intervalId);
+                            message.error("支付失败或超时！");
+                            setIsALiPayModalVisible(false);
+                        } else {
+                            tries++;
+                        }
+                    })
+                    .catch(error => {
+                        message.error("查询支付状态出错！");
+                        clearInterval(intervalId);
+                    });
+                }, 3000);
+            } else {
+                message.error(response.msg);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
     }
 
     useEffect(() => {
         const runALiPay = async () => {
             if (selectedOrder && shouldCallALiPay) {
-                await ALiPay();
+                ALiPay();
                 setShouldCallALiPay(false);
             }
         };
@@ -742,7 +793,13 @@ function UserOrderList(props) {
                 open={isALiPayModalVisible}
                 onCancel={() => {setIsALiPayModalVisible(false); setSelectedOrder(null)}}
                 footer={null}
+                width={1080}
+                height={1080}
+                style={{
+                    top: 15,
+                  }}
             >
+                <iframe width="1000" height="880" srcDoc={aLiPayBody} title="ALiPay"></iframe>
             </Modal>
             <Modal
                 title="支付流水记录"
