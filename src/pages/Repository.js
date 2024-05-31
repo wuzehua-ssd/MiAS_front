@@ -1,26 +1,26 @@
 import { Dropdown, Layout, Menu, message } from "antd";
-import './User.css';
-import UserOrderList from "../components/user/UserOrderList";
-import UserOrderCreate from "../components/user/UserOrderCreate";
 import { useEffect, useState } from "react";
+import './Repository.css';
 import { DownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom';
+import InventoryList from "../components/repository/InventoryList";
+import AddInventory from "../components/repository/AddInventory";
 
 const { Header, Sider } = Layout;
 
 const ITEMS = [
     {
-        label: "服务进度",
-        key: "serviceProgress",
+        label: "库存管理",
+        key: "repositoryManage",
         children: [
-            { label: "工单列表", key: "/userOrderList"},
-            { label: "工单创建", key: "/orderCreate"},
+            { label: "物料列表", key: "/inventoryList"},
+            { label: "新增物料", key: "/addInventory"},
         ],
     }
 ]
 
-function UserHome() {
-    const [selectedMenuItem, setSelectedMenuItem] = useState("/userOrderList");
+function RepositoryHome() {
+    const [selectedMenuItem, setSelectedMenuItem] = useState("/inventoryList");
 
     const navigate = useNavigate();
 
@@ -55,19 +55,19 @@ function UserHome() {
     };
 
     const switchCreate = () => {
-        setSelectedMenuItem("/orderCreate");
+        setSelectedMenuItem("/addInventory");
     }
 
     const switchList = () => {
-        setSelectedMenuItem("/userOrderList");
+        setSelectedMenuItem("/inventoryList");
     }
 
     const renderContent = () => {
         switch (selectedMenuItem) {
-            case "/userOrderList":
-              return <UserOrderList sonSwitch={switchCreate} />;
-            case "/orderCreate":
-              return <UserOrderCreate sonSwitch={switchList}/>;
+            case "/inventoryList":
+              return <InventoryList sonSwitch={switchCreate} />;
+            case "/addInventory":
+              return <AddInventory sonSwitch={switchList}/>;
             default:
               return null;
         }
@@ -75,16 +75,16 @@ function UserHome() {
 
     return (
         <Layout>
-            <Header className="user_header">
-                <div className="user_logo">
+            <Header className="repository_header">
+                <div className="repository_logo">
                     <div className="logo_text">
                         <img src="Mi.svg" alt="" width={24} height={24} />
                         <span style={{marginLeft:12}}>小米售后维修服务工单履约系统</span>
                     </div>
-                    <div className="user_dropdown">
+                    <div className="repository_dropdown">
                         <Dropdown menu={{ items }}>
                             <a onClick={(e) => e.preventDefault()}>
-                                用户
+                                网点库管
                                 <DownOutlined />
                             </a>
                         </Dropdown>
@@ -96,9 +96,9 @@ function UserHome() {
                     <Menu 
                         mode="inline" 
                         selectedKeys={[selectedMenuItem]}
-                        defaultSelectedKeys={["/userOrderList"]} 
-                        defaultOpenKeys={["serviceProgress"]} 
-                        style={{height: "92vh", borderRight: 0}}
+                        defaultSelectedKeys={["/inventoryList"]} 
+                        defaultOpenKeys={["repositoryManage"]} 
+                        style={{height: "108vh", borderRight: 0}}
                         items={ITEMS}
                         onSelect={handleMenuSelect}
                     />
@@ -111,4 +111,4 @@ function UserHome() {
     )
 }
 
-export default UserHome;
+export default RepositoryHome;

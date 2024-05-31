@@ -1,0 +1,10 @@
+.addInventoryContainer {
+    position: absolute;
+    top: 25%;
+    width: 400px;
+    height: 400px;
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    border: 1px solid rgb(37, 42, 45);
+}

@@ -1,6 +1,7 @@
 import { Button, Form, Input, Select, message } from 'antd';
 import './Login.css'
 import { useNavigate } from 'react-router-dom';
+import { userLogin } from '../api/User';
 
 function Login(props) {
     const navigate = useNavigate();
@@ -10,29 +11,41 @@ function Login(props) {
     }
 
     const handleFinish = (values) => {
-      const { username, password, identity } = values;
-      console.log('用户名:', username);
-      console.log('密码:', password);
-      console.log('身份:', identity);
-      
-      //调用后端登录接口并返回结果
+      const { loginName, password, identity } = values;
+      const loginData = {
+        loginName,
+        password,
+        identity
+      }
 
-      //判断返回结果并进入用户/工程师/网点页面
-      message.success('登录成功！')
-      if (identity === 'user') {
-        navigate('/user');
-      } else if (identity === 'engineer') {
-        navigate('/engineer');
-      } else if (identity === 'repository') {
-        navigate('/repository');
-      } 
+      //调用后端登录接口并返回结果
+      userLogin(loginData)
+      .then(response => {
+        if (response.code === '200') {
+          message.success('登录成功！')
+          localStorage.setItem("user", JSON.stringify(response.data));
+          if (response.data.identity === 0) {
+            navigate('/user');
+          } else if (response.data.identity === 1) {
+            navigate('/engineer');
+          } else if (response.data.identity === 2) {
+            navigate('/repository');
+          } 
+        } else {
+          message.error(response.msg);
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
+
     }
 
     return (
         <div className='loginContainer'>
           <h2 className='title'>小米售后维修服务工单履约系统</h2>
           <Form onFinish={handleFinish}>
-            <Form.Item label="用户名" name="username" rules={[{ required: true, message: "请输入用户名！"}]}>
+            <Form.Item label="用户名" name="loginName" rules={[{ required: true, message: "请输入用户名！"}]}>
               <Input placeholder='请输入用户名' />
             </Form.Item>
             <Form.Item label="用户密码 " name="password" rules={[{ required: true, message: "请输入密码！"}]}>
@@ -43,15 +56,15 @@ function Login(props) {
                  placeholder="请选择身份"
                  options={[
                   {
-                    value: 'user',
+                    value: '0',
                     label: '用户',
                   },
                   {
-                    value: 'engineer',
+                    value: '1',
                     label: '工程师',
                   },
                   {
-                    value: 'repository',
+                    value: '2',
                     label: '网点',
                   },
                  ]}

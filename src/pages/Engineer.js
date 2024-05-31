@@ -1,26 +1,24 @@
 import { Dropdown, Layout, Menu, message } from "antd";
-import './User.css';
-import UserOrderList from "../components/user/UserOrderList";
-import UserOrderCreate from "../components/user/UserOrderCreate";
-import { useEffect, useState } from "react";
+import './Engineer.css';
 import { DownOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import EngineerOrderList from "../components/engineer/EngineerOrderList";
 
 const { Header, Sider } = Layout;
 
 const ITEMS = [
     {
-        label: "服务进度",
-        key: "serviceProgress",
+        label: "工单处理",
+        key: "orderProcess",
         children: [
-            { label: "工单列表", key: "/userOrderList"},
-            { label: "工单创建", key: "/orderCreate"},
+            { label: "工单列表", key: "/engineerOrderList"},
         ],
     }
 ]
 
-function UserHome() {
-    const [selectedMenuItem, setSelectedMenuItem] = useState("/userOrderList");
+function EngineerHome() {
+    const [selectedMenuItem, setSelectedMenuItem] = useState("/engineerOrderList");
 
     const navigate = useNavigate();
 
@@ -31,7 +29,6 @@ function UserHome() {
             navigate('/');
         }
     }, [])
-    
 
     const handleLoginout = () => {
         localStorage.removeItem("user");
@@ -54,37 +51,18 @@ function UserHome() {
         setSelectedMenuItem(key);
     };
 
-    const switchCreate = () => {
-        setSelectedMenuItem("/orderCreate");
-    }
-
-    const switchList = () => {
-        setSelectedMenuItem("/userOrderList");
-    }
-
-    const renderContent = () => {
-        switch (selectedMenuItem) {
-            case "/userOrderList":
-              return <UserOrderList sonSwitch={switchCreate} />;
-            case "/orderCreate":
-              return <UserOrderCreate sonSwitch={switchList}/>;
-            default:
-              return null;
-        }
-    }
-
     return (
         <Layout>
-            <Header className="user_header">
-                <div className="user_logo">
+            <Header className="engineer_header">
+                <div className="engineer_logo">
                     <div className="logo_text">
                         <img src="Mi.svg" alt="" width={24} height={24} />
                         <span style={{marginLeft:12}}>小米售后维修服务工单履约系统</span>
                     </div>
-                    <div className="user_dropdown">
+                    <div className="engineer_dropdown">
                         <Dropdown menu={{ items }}>
                             <a onClick={(e) => e.preventDefault()}>
-                                用户
+                                工程师
                                 <DownOutlined />
                             </a>
                         </Dropdown>
@@ -96,19 +74,19 @@ function UserHome() {
                     <Menu 
                         mode="inline" 
                         selectedKeys={[selectedMenuItem]}
-                        defaultSelectedKeys={["/userOrderList"]} 
-                        defaultOpenKeys={["serviceProgress"]} 
-                        style={{height: "92vh", borderRight: 0}}
+                        defaultSelectedKeys={["/engineerOrderList"]} 
+                        defaultOpenKeys={["orderProcess"]} 
+                        style={{height: "93vh", borderRight: 0}}
                         items={ITEMS}
                         onSelect={handleMenuSelect}
                     />
                 </Sider>
                 <Layout style={{ padding: '0 24px 24px' }}>
-                    {renderContent()}
+                    <EngineerOrderList />
                 </Layout>
             </Layout>
         </Layout>
     )
 }
 
-export default UserHome;
+export default EngineerHome;
