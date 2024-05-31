@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { orderCancel, orderList, orderConfirm, orderDetails, orderConfirmReceipt } from "../../api/Order";
 import './UserOrderList.css'
 import { PlusOutlined } from '@ant-design/icons';
-import { payCreate, paySearch } from "../../api/pay";
+import { payCreate, payReset, paySearch } from "../../api/pay";
 
 const { Content } = Layout;
 
@@ -168,7 +168,7 @@ function UserOrderList(props) {
             title: "操作",
             key: "action",
             fixed: "right",
-            width: 240,
+            width: 270,
             render: (_, record) => {
                 const handleShowProgress = () => {
                     setSelectedOrder(record);
@@ -495,6 +495,19 @@ function UserOrderList(props) {
                         } else if (tries >= maxTries) {
                             clearInterval(intervalId);
                             message.error("支付失败或超时！");
+                            payReset(paySearchData)
+                            .then(response => {
+                                console.log(response);
+                                if (response.payStatus === 1) {
+                                    message.success("重置工单支付状态成功，请重新点击费用支付按钮！")
+                                } else {
+                                     message.error(response.msg);
+                                }
+                            })
+                            .catch(error => {
+                                message.error("重置工单支付状态出错！");
+                                clearInterval(intervalId);
+                            });
                             setIsWXPayModalVisible(false);
                         } else {
                             tries++;
@@ -555,10 +568,22 @@ function UserOrderList(props) {
                             };
                             handleSearchFish(values);
                             setSelectedOrder(null);
-
                         } else if (tries >= maxTries) {
                             clearInterval(intervalId);
                             message.error("支付失败或超时！");
+                            payReset(paySearchData)
+                            .then(response => {
+                                console.log(response);
+                                if (response.payStatus === 1) {
+                                    message.success("重置工单支付状态成功，请重新点击费用支付按钮！")
+                                } else {
+                                     message.error(response.msg);
+                                }
+                            })
+                            .catch(error => {
+                                message.error("重置工单支付状态出错！");
+                                clearInterval(intervalId);
+                            });
                             setIsALiPayModalVisible(false);
                         } else {
                             tries++;
@@ -781,7 +806,25 @@ function UserOrderList(props) {
             <Modal
                 title="微信支付"
                 open={isWXPayModalVisible}
-                onCancel={() => {setIsWXPayModalVisible(false); setSelectedOrder(null)}}
+                onCancel={() => {
+                    const paySearchData = {
+                        orderId: selectedOrder ? selectedOrder.id : 0,
+                    }
+                    payReset(paySearchData)
+                    .then(response => {
+                        console.log(response);
+                        if (response.payStatus === 1) {
+                            message.success("重置工单支付状态成功，请重新点击费用支付按钮！")
+                        } else {
+                            message.error(response.msg);
+                        }
+                    })
+                    .catch(error => {
+                        message.error("重置工单支付状态出错！");
+                    });
+                    setIsWXPayModalVisible(false); 
+                    setSelectedOrder(null);
+                }}
                 footer={null}
             >
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -791,7 +834,25 @@ function UserOrderList(props) {
             <Modal
                 title="支付宝支付"
                 open={isALiPayModalVisible}
-                onCancel={() => {setIsALiPayModalVisible(false); setSelectedOrder(null)}}
+                onCancel={() => {
+                    const paySearchData = {
+                        orderId: selectedOrder ? selectedOrder.id : 0,
+                    }
+                    payReset(paySearchData)
+                    .then(response => {
+                        console.log(response);
+                        if (response.payStatus === 1) {
+                            message.success("重置工单支付状态成功，请重新点击费用支付按钮！")
+                        } else {
+                            message.error(response.msg);
+                        }
+                    })
+                    .catch(error => {
+                        message.error("重置工单支付状态出错！");
+                    });
+                    setIsALiPayModalVisible(false); 
+                    setSelectedOrder(null);
+                }}
                 footer={null}
                 width={1080}
                 height={1080}
@@ -830,7 +891,7 @@ function UserOrderList(props) {
                 onCancel={() => {setIsConfirmReceiptModalVisible(false); setSelectedOrder(null)}}
                 footer={null}
             >
-                <p>是否确定取消工单号为: {selectedOrder===null ? -1 : selectedOrder.id} 的工单中的设备：{selectedOrder===null ? "" : selectedOrder.productInfo},您已经收到！</p>
+                <p>是否确定收到工单号为: {selectedOrder===null ? -1 : selectedOrder.id} 的工单中的设备：{selectedOrder===null ? "" : selectedOrder.productInfo},您已经收到！</p>
                 <Button type="primary" style={{ backgroundColor: 'red' }} className="btn-spacing" onClick={handleConfirmReceipt}>
                     是
                 </Button>
